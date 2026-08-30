@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Splitter</title>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f5f5f5;
+      color: #2c2c2a;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 500;
+      margin: 0 0 0.5rem;
+      color: #2c2c2a;
+    }
+
+    .session-info {
+      background: #e6f1fb;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #85b7eb;
+    }
+
+    .session-text {
+      font-size: 13px;
+      color: #185fa5;
+    }
+
+    .session-link {
+      font-size: 13px;
+      font-weight: 600;
+      color: #185fa5;
+      font-family: monospace;
+      background: white;
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: 1px solid #85b7eb;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .session-link:hover {
+      background: #f0f8ff;
+    }
+
+    .setup-screen {
+      background: white;
+      border: 1px solid #d3d1c7;
+      border-radius: 8px;
+      padding: 2rem;
+      text-align: center;
+      margin: 2rem auto;
+    }
+
+    .setup-screen h2 {
+      font-size: 20px;
+      margin-bottom: 1rem;
+    }
+
+    .setup-screen p {
+      color: #888780;
+      margin-bottom: 1.5rem;
+    }
+
+    .setup-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #d3d1c7;
+      border-radius: 6px;
+      font-size: 14px;
+      margin-bottom: 12px;
+      font-family: inherit;
+    }
+
+    .setup-input:focus {
+      outline: none;
+      border-color: #378add;
+      box-shadow: 0 0 0 3px rgba(55, 138, 221, 0.1);
+    }
+
+    .setup-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .setup-buttons button {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid #888780;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+
+    .setup-buttons button:hover {
+      background: #f5f5f5;
+    }
+
+    .setup-buttons .primary {
+      background: #378add;
+      color: white;
+      border-color: #378add;
+    }
+
+    .setup-buttons .primary:hover {
+      background: #2570d0;
+    }
+
+    h2 {
+      font-size: 16px;
+      font-weight: 500;
+      margin: 1.5rem 0 1rem;
+      color: #2c2c2a;
+    }
+
+    .names-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+
+    .name-input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #d3d1c7;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .name-input:focus {
+      outline: none;
+      border-color: #378add;
+      box-shadow: 0 0 0 3px rgba(55, 138, 221, 0.1);
+    }
+
+    .form-card {
+      background: white;
+      border: 1px solid #d3d1c7;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-row {
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 12px;
+    }
+
+    .form-row.full {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+      flex: 1;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: #888780;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d3d1c7;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #378add;
+      box-shadow: 0 0 0 3px rgba(55, 138, 221, 0.1);
+    }
+
+    .split-options {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .split-btn {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #d3d1c7;
+      background: #f5f5f5;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+    }
+
+    .split-btn:hover {
+      border-color: #888780;
+      background: #eaeaea;
+    }
+
+    .split-btn.active {
+      background: #378add;
+      color: white;
+      border-color: #378add;
+    }
+
+    .button {
+      padding: 12px 16px;
+      border: 1px solid #888780;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #2c2c2a;
+      transition: all 0.15s;
+    }
+
+    .button:hover {
+      background: #f5f5f5;
+      border-color: #5f5e5a;
+    }
+
+    .button.primary {
+      background: #378add;
+      color: white;
+      border-color: #378add;
+    }
+
+    .button.primary:hover {
+      background: #2570d0;
+    }
+
+    .button:active {
+      transform: scale(0.98);
+    }
+
+    .balance-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+
+    .balance-card {
+      background: white;
+      border-radius: 6px;
+      border: 1px solid #d3d1c7;
+      padding: 1rem;
+    }
+
+    .balance-label {
+      font-size: 13px;
+      color: #888780;
+      margin-bottom: 8px;
+    }
+
+    .balance-amount {
+      font-size: 24px;
+      font-weight: 600;
+      color: #378add;
+    }
+
+    .settlement {
+      background: #e6f1fb;
+      border-radius: 6px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-left: 4px solid #378add;
+    }
+
+    .settlement-text {
+      font-size: 15px;
+      color: #2c2c2a;
+      line-height: 1.5;
+    }
+
+    .settlement-empty {
+      font-size: 14px;
+      color: #888780;
+    }
+
+    .expenses-list {
+      margin-bottom: 1.5rem;
+    }
+
+    .expense-item {
+      background: white;
+      border: 1px solid #d3d1c7;
+      border-radius: 6px;
+      padding: 1rem;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .expense-content {
+      flex: 1;
+    }
+
+    .expense-desc {
+      font-size: 15px;
+      font-weight: 500;
+      color: #2c2c2a;
+    }
+
+    .expense-meta {
+      font-size: 13px;
+      color: #888780;
+      margin-top: 4px;
+    }
+
+    .expense-amount {
+      font-size: 16px;
+      font-weight: 600;
+      color: #378add;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #b4b2a9;
+      cursor: pointer;
+      font-size: 20px;
+      padding: 4px 8px;
+      line-height: 1;
+    }
+
+    .delete-btn:hover {
+      color: #e24b4a;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: #888780;
+    }
+
+    .empty-state-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .controls button {
+      flex: 1;
+    }
+
+    .danger {
+      color: #e24b4a;
+      border-color: #e24b4a;
+    }
+
+    .danger:hover {
+      background: rgba(226, 75, 74, 0.05);
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #639922;
+      margin-left: 8px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .status-indicator.offline {
+      background: #e24b4a;
+      animation: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="setupScreen">
+      <div class="setup-screen">
+        <h2>💰 Expense Splitter</h2>
+        <p>Start a new split or join an existing one</p>
+        
+        <input type="text" id="setupPerson1" class="setup-input" placeholder="Your name" value="You">
+        <input type="text" id="setupPerson2" class="setup-input" placeholder="Roommate's name" value="Roommate">
+        <input type="text" id="joinSessionId" class="setup-input" placeholder="Enter session ID to join (optional)">
+        
+        <div class="setup-buttons">
+          <button onclick="app.joinSession()">Join existing</button>
+          <button class="primary" onclick="app.createSession()">Start new</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="appScreen" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h1>💰 Expense Splitter</h1>
+        <div class="status-indicator" id="statusIndicator"></div>
+      </div>
+
+      <div class="session-info">
+        <div class="session-text">Session: <span id="sessionIdDisplay" style="font-weight: 600;"></span></div>
+        <button class="session-link" onclick="app.copySessionId()">Copy link for roommate</button>
+      </div>
+
+      <div class="names-row">
+        <input type="text" id="person1" class="name-input" placeholder="Your name">
+        <input type="text" id="person2" class="name-input" placeholder="Roommate's name">
+      </div>
+
+      <div class="form-card">
+        <h2>Add an expense</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Amount ($)</label>
+            <input type="number" id="amount" placeholder="0.00" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" id="description" placeholder="e.g., Groceries">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Who paid?</label>
+            <select id="payer">
+              <option value="person1">Person 1</option>
+              <option value="person2">Person 2</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-group">
+            <label>How to split?</label>
+            <div class="split-options">
+              <button type="button" class="split-btn active" data-split="equal">50/50</button>
+              <button type="button" class="split-btn" data-split="p1">Person 1 pays all</button>
+              <button type="button" class="split-btn" data-split="p2">Person 2 pays all</button>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="button primary" id="addBtn">Add expense</button>
+      </div>
+
+      <div class="balance-grid">
+        <div class="balance-card">
+          <div class="balance-label" id="person1-label">You paid</div>
+          <div class="balance-amount" id="person1-paid">$0.00</div>
+        </div>
+        <div class="balance-card">
+          <div class="balance-label" id="person2-label">Roommate paid</div>
+          <div class="balance-amount" id="person2-paid">$0.00</div>
+        </div>
+      </div>
+
+      <div class="settlement" id="settlement">
+        <div class="settlement-empty">Add expenses to see settlement</div>
+      </div>
+
+      <h2>Expenses</h2>
+      <div class="expenses-list" id="expensesList">
+        <div class="empty-state">
+          <div class="empty-state-icon">📝</div>
+          <div>No expenses yet. Add one to get started!</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button type="button" class="button" id="exportBtn">Export</button>
+        <button type="button" class="button danger" id="clearBtn">Clear all</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = window.location.origin;
+    const socket = io();
+
+    class ExpenseSplitter {
+      constructor() {
+        this.sessionId = null;
+        this.expenses = [];
+        this.splitMode = 'equal';
+        this.person1 = 'You';
+        this.person2 = 'Roommate';
+        this.setupEventListeners();
+        this.setupWebSocket();
+      }
+
+      setupWebSocket() {
+        socket.on('expense_added', (expense) => {
+          this.expenses.push(expense);
+          this.updateUI();
+        });
+
+        socket.on('expense_deleted', (data) => {
+          this.expenses = this.expenses.filter(e => e.id !== data.id);
+          this.updateUI();
+        });
+
+        socket.on('expenses_cleared', () => {
+          this.expenses = [];
+          this.updateUI();
+        });
+
+        socket.on('names_updated', (data) => {
+          this.person1 = data.person1;
+          this.person2 = data.person2;
+          document.getElementById('person1').value = this.person1;
+          document.getElementById('person2').value = this.person2;
+          this.updateUI();
+        });
+
+        socket.on('user_joined', (data) => {
+          console.log('Another user joined:', data.userId);
+        });
+
+        socket.on('connect', () => {
+          document.getElementById('statusIndicator').classList.remove('offline');
+        });
+
+        socket.on('disconnect', () => {
+          document.getElementById('statusIndicator').classList.add('offline');
+        });
+      }
+
+      setupEventListeners() {
+        document.getElementById('addBtn').addEventListener('click', () => this.addExpense());
+        document.getElementById('clearBtn').addEventListener('click', () => this.clearAll());
+        document.getElementById('exportBtn').addEventListener('click', () => this.exportData());
+
+        document.querySelectorAll('.split-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.split-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            this.splitMode = e.target.dataset.split;
+          });
+        });
+
+        document.getElementById('amount').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') this.addExpense();
+        });
+
+        document.getElementById('description').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') this.addExpense();
+        });
+
+        document.getElementById('person1').addEventListener('change', (e) => {
+          this.person1 = e.target.value;
+          this.updateNames();
+          this.updateUI();
+        });
+
+        document.getElementById('person2').addEventListener('change', (e) => {
+          this.person2 = e.target.value;
+          this.updateNames();
+          this.updateUI();
+        });
+      }
+
+      async createSession() {
+        const person1 = document.getElementById('setupPerson1').value.trim() || 'You';
+        const person2 = document.getElementById('setupPerson2').value.trim() || 'Roommate';
+
+        try {
+          const res = await fetch(`${API_URL}/api/session/create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ person1, person2 })
+          });
+          const data = await res.json();
+          this.sessionId = data.sessionId;
+          this.person1 = person1;
+          this.person2 = person2;
+          this.loadSession();
+        } catch (err) {
+          alert('Failed to create session. Check your connection.');
+          console.error(err);
+        }
+      }
+
+      async joinSession() {
+        const sessionId = document.getElementById('joinSessionId').value.trim();
+        if (!sessionId) {
+          alert('Please enter a session ID');
+          return;
+        }
+
+        try {
+          const res = await fetch(`${API_URL}/api/session/${sessionId}`);
+          if (!res.ok) throw new Error('Session not found');
+          
+          const data = await res.json();
+          this.sessionId = sessionId;
+          this.person1 = data.session.person1;
+          this.person2 = data.session.person2;
+          this.expenses = data.expenses;
+          this.loadSession();
+        } catch (err) {
+          alert('Session not found. Check the session ID and try again.');
+          console.error(err);
+        }
+      }
+
+      loadSession() {
+        document.getElementById('setupScreen').style.display = 'none';
+        document.getElementById('appScreen').style.display = 'block';
+        document.getElementById('sessionIdDisplay').textContent = this.sessionId;
+
+        document.getElementById('person1').value = this.person1;
+        document.getElementById('person2').value = this.person2;
+
+        socket.emit('join_session', this.sessionId);
+        this.updateUI();
+      }
+
+      async addExpense() {
+        const amount = parseFloat(document.getElementById('amount').value);
+        const description = document.getElementById('description').value.trim();
+        const payer = document.getElementById('payer').value;
+
+        if (!amount || amount <= 0 || !description) {
+          alert('Please enter an amount and description');
+          return;
+        }
+
+        const expense = {
+          id: Date.now().toString(),
+          amount: Math.round(amount * 100) / 100,
+          description,
+          payer,
+          split: this.splitMode,
+          date: new Date().toLocaleDateString()
+        };
+
+        try {
+          const res = await fetch(`${API_URL}/api/session/${this.sessionId}/expense`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(expense)
+          });
+
+          if (!res.ok) throw new Error('Failed to add expense');
+
+          this.expenses.push(expense);
+          document.getElementById('amount').value = '';
+          document.getElementById('description').value = '';
+          document.getElementById('payer').value = 'person1';
+          document.getElementById('amount').focus();
+          this.updateUI();
+        } catch (err) {
+          alert('Failed to add expense. Check your connection.');
+          console.error(err);
+        }
+      }
+
+      async deleteExpense(id) {
+        try {
+          const res = await fetch(`${API_URL}/api/session/${this.sessionId}/expense/${id}`, {
+            method: 'DELETE'
+          });
+
+          if (!res.ok) throw new Error('Failed to delete expense');
+
+          this.expenses = this.expenses.filter(e => e.id !== id);
+          this.updateUI();
+        } catch (err) {
+          alert('Failed to delete expense');
+          console.error(err);
+        }
+      }
+
+      async clearAll() {
+        if (this.expenses.length === 0) return;
+        if (confirm('Clear all expenses? This cannot be undone.')) {
+          try {
+            const res = await fetch(`${API_URL}/api/session/${this.sessionId}/expenses`, {
+              method: 'DELETE'
+            });
+
+            if (!res.ok) throw new Error('Failed to clear expenses');
+
+            this.expenses = [];
+            this.updateUI();
+          } catch (err) {
+            alert('Failed to clear expenses');
+            console.error(err);
+          }
+        }
+      }
+
+      async updateNames() {
+        try {
+          await fetch(`${API_URL}/api/session/${this.sessionId}/names`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ person1: this.person1, person2: this.person2 })
+          });
+        } catch (err) {
+          console.error('Failed to update names:', err);
+        }
+      }
+
+      calculateBalances() {
+        let person1Paid = 0, person2Paid = 0;
+        let person1Owes = 0, person2Owes = 0;
+
+        this.expenses.forEach(exp => {
+          if (exp.payer === 'person1') {
+            person1Paid += exp.amount;
+          } else {
+            person2Paid += exp.amount;
+          }
+
+          if (exp.split === 'equal') {
+            const half = exp.amount / 2;
+            if (exp.payer === 'person1') {
+              person2Owes += half;
+            } else {
+              person1Owes += half;
+            }
+          } else if (exp.split === 'p2') {
+            if (exp.payer === 'person1') {
+              person2Owes += exp.amount;
+            }
+          } else if (exp.split === 'p1') {
+            if (exp.payer === 'person2') {
+              person1Owes += exp.amount;
+            }
+          }
+        });
+
+        return {
+          person1: { paid: Math.round(person1Paid * 100) / 100, owes: Math.round(person1Owes * 100) / 100 },
+          person2: { paid: Math.round(person2Paid * 100) / 100, owes: Math.round(person2Owes * 100) / 100 }
+        };
+      }
+
+      formatCurrency(amount) {
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+      }
+
+      updateUI() {
+        const balances = this.calculateBalances();
+        document.getElementById('person1-label').textContent = `${this.person1} paid`;
+        document.getElementById('person2-label').textContent = `${this.person2} paid`;
+        document.getElementById('payer').innerHTML = `<option value="person1">${this.person1}</option><option value="person2">${this.person2}</option>`;
+
+        document.getElementById('person1-paid').textContent = this.formatCurrency(balances.person1.paid);
+        document.getElementById('person2-paid').textContent = this.formatCurrency(balances.person2.paid);
+
+        this.updateSettlement(balances);
+        this.updateExpensesList();
+      }
+
+      updateSettlement(balances) {
+        const settlementDiv = document.getElementById('settlement');
+        const net1 = balances.person1.paid - balances.person1.owes;
+
+        if (this.expenses.length === 0) {
+          settlementDiv.innerHTML = '<div class="settlement-empty">Add expenses to see settlement</div>';
+          return;
+        }
+
+        let message = '';
+        const diff = Math.abs(net1);
+
+        if (Math.abs(net1) < 0.01) {
+          message = `✓ All settled up!`;
+        } else if (net1 > 0) {
+          message = `<strong>${this.person2}</strong> owes <strong>${this.person1}</strong> ${this.formatCurrency(diff)}`;
+        } else {
+          message = `<strong>${this.person1}</strong> owes <strong>${this.person2}</strong> ${this.formatCurrency(diff)}`;
+        }
+
+        settlementDiv.innerHTML = `<div class="settlement-text">${message}</div>`;
+      }
+
+      updateExpensesList() {
+        const list = document.getElementById('expensesList');
+
+        if (this.expenses.length === 0) {
+          list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📝</div><div>No expenses yet. Add one to get started!</div></div>';
+          return;
+        }
+
+        list.innerHTML = this.expenses.map(exp => {
+          const payer = exp.payer === 'person1' ? this.person1 : this.person2;
+          let splitText = '';
+          if (exp.split === 'equal') {
+            splitText = '50/50 split';
+          } else if (exp.split === 'p1') {
+            splitText = `${this.person1} pays all`;
+          } else {
+            splitText = `${this.person2} pays all`;
+          }
+
+          return `
+            <div class="expense-item">
+              <div class="expense-content">
+                <div class="expense-desc">${this.escapeHtml(exp.description)}</div>
+                <div class="expense-meta">${payer} paid • ${splitText} • ${exp.date}</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="expense-amount">${this.formatCurrency(exp.amount)}</div>
+                <button type="button" class="delete-btn" onclick="app.deleteExpense('${exp.id}')" title="Delete">×</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      escapeHtml(text) {
+        const map = {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+      }
+
+      exportData() {
+        const data = {
+          person1: this.person1,
+          person2: this.person2,
+          expenses: this.expenses,
+          exportDate: new Date().toISOString()
+        };
+
+        const jsonString = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `expenses-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      copySessionId() {
+        navigator.clipboard.writeText(`${window.location.href}?join=${this.sessionId}`).then(() => {
+          alert('Invite link copied to clipboard! Share it with your roommate.');
+        });
+      }
+    }
+
+    const app = new ExpenseSplitter();
+
+    // Check if joining session from URL
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('join')) {
+      document.getElementById('joinSessionId').value = params.get('join');
+      app.joinSession();
+    }
+  </script>
+</body>
+</html>
