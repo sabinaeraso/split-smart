@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Expense Splitter</title>
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * {
       box-sizing: border-box;
@@ -13,9 +14,9 @@
     body {
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: #f5f5f5;
-      color: #2c2c2a;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8f9fa;
+      color: #1a1a1a;
     }
 
     .container {
@@ -25,78 +26,88 @@
     }
 
     h1 {
-      font-size: 28px;
-      font-weight: 500;
+      font-size: 32px;
+      font-weight: 700;
       margin: 0 0 0.5rem;
-      color: #2c2c2a;
+      color: #1a1a1a;
+      letter-spacing: -0.5px;
     }
 
     .session-info {
-      background: #e6f1fb;
-      border-radius: 6px;
+      background: #eff6ff;
+      border-radius: 8px;
       padding: 12px 16px;
       margin-bottom: 1.5rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border: 1px solid #85b7eb;
+      border: 1px solid #bfdbfe;
     }
 
     .session-text {
       font-size: 13px;
-      color: #185fa5;
+      color: #0369a1;
+      font-weight: 500;
     }
 
     .session-link {
       font-size: 13px;
       font-weight: 600;
-      color: #185fa5;
-      font-family: monospace;
+      color: #0369a1;
+      font-family: 'Inter', monospace;
       background: white;
       padding: 6px 12px;
-      border-radius: 4px;
-      border: 1px solid #85b7eb;
+      border-radius: 6px;
+      border: 1px solid #bfdbfe;
       cursor: pointer;
       transition: all 0.2s;
     }
 
     .session-link:hover {
-      background: #f0f8ff;
+      background: #f0f9ff;
+      border-color: #0369a1;
     }
 
     .setup-screen {
       background: white;
-      border: 1px solid #d3d1c7;
-      border-radius: 8px;
-      padding: 2rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 2.5rem;
       text-align: center;
       margin: 2rem auto;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     }
 
     .setup-screen h2 {
-      font-size: 20px;
-      margin-bottom: 1rem;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: #1a1a1a;
     }
 
     .setup-screen p {
-      color: #888780;
+      color: #6b7280;
       margin-bottom: 1.5rem;
+      font-size: 14px;
     }
 
     .setup-input {
       width: 100%;
-      padding: 12px 16px;
-      border: 1px solid #d3d1c7;
-      border-radius: 6px;
+      padding: 12px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
       font-size: 14px;
       margin-bottom: 12px;
       font-family: inherit;
+      background: #fafbfc;
+      transition: all 0.2s;
     }
 
     .setup-input:focus {
       outline: none;
-      border-color: #378add;
-      box-shadow: 0 0 0 3px rgba(55, 138, 221, 0.1);
+      border-color: #3b82f6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
     .setup-buttons {
@@ -107,34 +118,41 @@
     .setup-buttons button {
       flex: 1;
       padding: 12px 16px;
-      border: 1px solid #888780;
+      border: 1px solid #d1d5db;
       background: white;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
       transition: all 0.15s;
+      font-family: inherit;
     }
 
     .setup-buttons button:hover {
-      background: #f5f5f5;
+      background: #f9fafb;
+      border-color: #9ca3af;
     }
 
     .setup-buttons .primary {
-      background: #378add;
+      background: #3b82f6;
       color: white;
-      border-color: #378add;
+      border-color: #3b82f6;
     }
 
     .setup-buttons .primary:hover {
-      background: #2570d0;
+      background: #2563eb;
+      border-color: #2563eb;
     }
 
     h2 {
       font-size: 16px;
-      font-weight: 500;
+      font-weight: 600;
       margin: 1.5rem 0 1rem;
-      color: #2c2c2a;
+      color: #1a1a1a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 12px;
+      color: #6b7280;
     }
 
     .names-row {
@@ -145,25 +163,29 @@
 
     .name-input {
       flex: 1;
-      padding: 10px 12px;
-      border: 1px solid #d3d1c7;
-      border-radius: 6px;
+      padding: 11px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
       font-size: 14px;
       font-family: inherit;
+      background: #fafbfc;
+      transition: all 0.2s;
     }
 
     .name-input:focus {
       outline: none;
-      border-color: #378add;
-      box-shadow: 0 0 0 3px rgba(55, 138, 221, 0.1);
+      border-color: #3b82f6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
     .form-card {
       background: white;
-      border: 1px solid #d3d1c7;
-      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
       padding: 1.5rem;
       margin-bottom: 1.5rem;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
     .form-row {
@@ -182,28 +204,33 @@
 
     label {
       display: block;
-      font-size: 13px;
-      font-weight: 500;
+      font-size: 12px;
+      font-weight: 600;
       margin-bottom: 6px;
-      color: #888780;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
 
     input[type="text"],
     input[type="number"],
     select {
       width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #d3d1c7;
-      border-radius: 6px;
+      padding: 11px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
       font-size: 14px;
       font-family: inherit;
+      background: #fafbfc;
+      transition: all 0.2s;
     }
 
     input:focus,
     select:focus {
       outline: none;
-      border-color: #378add;
-      box-shadow: 0 0 0 3px rgba(55, 138, 221, 0.1);
+      border-color: #3b82f6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
     .split-options {
@@ -215,51 +242,54 @@
     .split-btn {
       flex: 1;
       padding: 10px 12px;
-      border: 1px solid #d3d1c7;
-      background: #f5f5f5;
-      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      background: white;
+      border-radius: 8px;
       cursor: pointer;
       font-size: 13px;
       font-weight: 500;
       transition: all 0.15s ease;
+      font-family: inherit;
     }
 
     .split-btn:hover {
-      border-color: #888780;
-      background: #eaeaea;
+      border-color: #9ca3af;
+      background: #f9fafb;
     }
 
     .split-btn.active {
-      background: #378add;
+      background: #3b82f6;
       color: white;
-      border-color: #378add;
+      border-color: #3b82f6;
     }
 
     .button {
       padding: 12px 16px;
-      border: 1px solid #888780;
+      border: 1px solid #d1d5db;
       background: white;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
       font-size: 14px;
-      font-weight: 500;
-      color: #2c2c2a;
+      font-weight: 600;
+      color: #1a1a1a;
       transition: all 0.15s;
+      font-family: inherit;
     }
 
     .button:hover {
-      background: #f5f5f5;
-      border-color: #5f5e5a;
+      background: #f9fafb;
+      border-color: #9ca3af;
     }
 
     .button.primary {
-      background: #378add;
+      background: #3b82f6;
       color: white;
-      border-color: #378add;
+      border-color: #3b82f6;
     }
 
     .button.primary:hover {
-      background: #2570d0;
+      background: #2563eb;
+      border-color: #2563eb;
     }
 
     .button:active {
@@ -275,40 +305,46 @@
 
     .balance-card {
       background: white;
-      border-radius: 6px;
-      border: 1px solid #d3d1c7;
-      padding: 1rem;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      padding: 1.25rem;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
     .balance-label {
-      font-size: 13px;
-      color: #888780;
-      margin-bottom: 8px;
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
 
     .balance-amount {
-      font-size: 24px;
-      font-weight: 600;
-      color: #378add;
+      font-size: 28px;
+      font-weight: 700;
+      color: #3b82f6;
     }
 
     .settlement {
-      background: #e6f1fb;
-      border-radius: 6px;
-      padding: 1rem;
+      background: #eff6ff;
+      border-radius: 12px;
+      padding: 1.25rem;
       margin-bottom: 1.5rem;
-      border-left: 4px solid #378add;
+      border-left: 4px solid #3b82f6;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
     .settlement-text {
       font-size: 15px;
-      color: #2c2c2a;
-      line-height: 1.5;
+      color: #1a1a1a;
+      line-height: 1.6;
+      font-weight: 500;
     }
 
     .settlement-empty {
       font-size: 14px;
-      color: #888780;
+      color: #6b7280;
     }
 
     .expenses-list {
@@ -317,14 +353,15 @@
 
     .expense-item {
       background: white;
-      border: 1px solid #d3d1c7;
-      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
       padding: 1rem;
       margin-bottom: 8px;
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       gap: 12px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
     .expense-content {
@@ -333,20 +370,20 @@
 
     .expense-desc {
       font-size: 15px;
-      font-weight: 500;
-      color: #2c2c2a;
+      font-weight: 600;
+      color: #1a1a1a;
     }
 
     .expense-meta {
       font-size: 13px;
-      color: #888780;
+      color: #6b7280;
       margin-top: 4px;
     }
 
     .expense-amount {
       font-size: 16px;
-      font-weight: 600;
-      color: #378add;
+      font-weight: 700;
+      color: #3b82f6;
       text-align: right;
       white-space: nowrap;
     }
@@ -354,27 +391,33 @@
     .delete-btn {
       background: none;
       border: none;
-      color: #b4b2a9;
+      color: #d1d5db;
       cursor: pointer;
       font-size: 20px;
       padding: 4px 8px;
       line-height: 1;
+      transition: color 0.2s;
     }
 
     .delete-btn:hover {
-      color: #e24b4a;
+      color: #ef4444;
     }
 
     .empty-state {
       text-align: center;
-      padding: 2rem 1rem;
-      color: #888780;
+      padding: 2.5rem 1rem;
+      color: #9ca3af;
     }
 
     .empty-state-icon {
-      font-size: 40px;
+      font-size: 48px;
       margin-bottom: 12px;
-      opacity: 0.5;
+      opacity: 0.4;
+    }
+
+    .empty-state-text {
+      font-size: 14px;
+      color: #6b7280;
     }
 
     .controls {
@@ -387,12 +430,13 @@
     }
 
     .danger {
-      color: #e24b4a;
-      border-color: #e24b4a;
+      color: #ef4444;
+      border-color: #fecaca;
     }
 
     .danger:hover {
-      background: rgba(226, 75, 74, 0.05);
+      background: #fef2f2;
+      border-color: #ef4444;
     }
 
     .status-indicator {
@@ -400,7 +444,7 @@
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: #639922;
+      background: #10b981;
       margin-left: 8px;
       animation: pulse 2s infinite;
     }
@@ -411,7 +455,7 @@
     }
 
     .status-indicator.offline {
-      background: #e24b4a;
+      background: #ef4444;
       animation: none;
     }
   </style>
@@ -420,29 +464,29 @@
   <div class="container">
     <div id="setupScreen">
       <div class="setup-screen">
-        <h2>💰 Expense Splitter</h2>
-        <p>Start a new split or join an existing one</p>
+        <h2>Expense Splitter</h2>
+        <p>Track shared expenses with your roommate</p>
         
         <input type="text" id="setupPerson1" class="setup-input" placeholder="Your name" value="You">
         <input type="text" id="setupPerson2" class="setup-input" placeholder="Roommate's name" value="Roommate">
-        <input type="text" id="joinSessionId" class="setup-input" placeholder="Enter session ID to join (optional)">
+        <input type="text" id="joinSessionId" class="setup-input" placeholder="Session ID (optional)">
         
         <div class="setup-buttons">
-          <button onclick="app.joinSession()">Join existing</button>
-          <button class="primary" onclick="app.createSession()">Start new</button>
+          <button onclick="app.joinSession()">Join</button>
+          <button class="primary" onclick="app.createSession()">Start New</button>
         </div>
       </div>
     </div>
 
     <div id="appScreen" style="display: none;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-        <h1>💰 Expense Splitter</h1>
+        <h1>Expense Splitter</h1>
         <div class="status-indicator" id="statusIndicator"></div>
       </div>
 
       <div class="session-info">
-        <div class="session-text">Session: <span id="sessionIdDisplay" style="font-weight: 600;"></span></div>
-        <button class="session-link" onclick="app.copySessionId()">Copy link for roommate</button>
+        <div class="session-text">Session: <span id="sessionIdDisplay" style="font-weight: 700;"></span></div>
+        <button class="session-link" onclick="app.copySessionId()">Copy for roommate</button>
       </div>
 
       <div class="names-row">
@@ -451,7 +495,7 @@
       </div>
 
       <div class="form-card">
-        <h2>Add an expense</h2>
+        <h2>Add Expense</h2>
         <div class="form-row">
           <div class="form-group">
             <label>Amount ($)</label>
@@ -481,7 +525,7 @@
             </div>
           </div>
         </div>
-        <button type="button" class="button primary" id="addBtn">Add expense</button>
+        <button type="button" class="button primary" id="addBtn">Add Expense</button>
       </div>
 
       <div class="balance-grid">
@@ -502,14 +546,14 @@
       <h2>Expenses</h2>
       <div class="expenses-list" id="expensesList">
         <div class="empty-state">
-          <div class="empty-state-icon">📝</div>
-          <div>No expenses yet. Add one to get started!</div>
+          <div class="empty-state-icon">📋</div>
+          <div class="empty-state-text">No expenses yet</div>
         </div>
       </div>
 
       <div class="controls">
         <button type="button" class="button" id="exportBtn">Export</button>
-        <button type="button" class="button danger" id="clearBtn">Clear all</button>
+        <button type="button" class="button danger" id="clearBtn">Clear All</button>
       </div>
     </div>
   </div>
@@ -757,9 +801,9 @@
             person1Owes += half;
             person2Owes += half;
           } else if (exp.split === 'p2') {
-              person2Owes += exp.amount;
+            person2Owes += exp.amount;
           } else if (exp.split === 'p1') {
-              person1Owes += exp.amount;
+            person1Owes += exp.amount;
           }
         });
 
@@ -774,30 +818,25 @@
       }
 
       updateUI() {
-        
         const p1Name = document.getElementById('person1').value || 'Person 1';
         const p2Name = document.getElementById('person2').value || 'Person 2';
 
-        // Update split button labels
         document.getElementById('split-p1').textContent = `${p1Name} pays all`;
         document.getElementById('split-p2').textContent = `${p2Name} pays all`;
         
         document.getElementById('person1-label').textContent = `${p1Name} paid`;
         document.getElementById('person2-label').textContent = `${p2Name} paid`;
+        document.getElementById('payer').innerHTML = `<option value="person1">${p1Name}</option><option value="person2">${p2Name}</option>`;
 
         const balances = this.calculateBalances();
-        document.getElementById('person1-label').textContent = `${this.person1} paid`;
-        document.getElementById('person2-label').textContent = `${this.person2} paid`;
-        document.getElementById('payer').innerHTML = `<option value="person1">${this.person1}</option><option value="person2">${this.person2}</option>`;
-
         document.getElementById('person1-paid').textContent = this.formatCurrency(balances.person1.paid);
         document.getElementById('person2-paid').textContent = this.formatCurrency(balances.person2.paid);
 
-        this.updateSettlement(balances);
-        this.updateExpensesList();
+        this.updateSettlement(p1Name, p2Name, balances);
+        this.updateExpensesList(p1Name, p2Name);
       }
 
-      updateSettlement(balances) {
+      updateSettlement(p1Name, p2Name, balances) {
         const settlementDiv = document.getElementById('settlement');
         const net1 = balances.person1.paid - balances.person1.owes;
 
@@ -812,31 +851,31 @@
         if (Math.abs(net1) < 0.01) {
           message = `✓ All settled up!`;
         } else if (net1 > 0) {
-          message = `<strong>${this.person2}</strong> owes <strong>${this.person1}</strong> ${this.formatCurrency(diff)}`;
+          message = `<strong>${p2Name}</strong> owes <strong>${p1Name}</strong> ${this.formatCurrency(diff)}`;
         } else {
-          message = `<strong>${this.person1}</strong> owes <strong>${this.person2}</strong> ${this.formatCurrency(diff)}`;
+          message = `<strong>${p1Name}</strong> owes <strong>${p2Name}</strong> ${this.formatCurrency(diff)}`;
         }
 
         settlementDiv.innerHTML = `<div class="settlement-text">${message}</div>`;
       }
 
-      updateExpensesList() {
+      updateExpensesList(p1Name, p2Name) {
         const list = document.getElementById('expensesList');
 
         if (this.expenses.length === 0) {
-          list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📝</div><div>No expenses yet. Add one to get started!</div></div>';
+          list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">No expenses yet</div></div>';
           return;
         }
 
         list.innerHTML = this.expenses.map(exp => {
-          const payer = exp.payer === 'person1' ? this.person1 : this.person2;
+          const payer = exp.payer === 'person1' ? p1Name : p2Name;
           let splitText = '';
           if (exp.split === 'equal') {
             splitText = '50/50 split';
           } else if (exp.split === 'p1') {
-            splitText = `${this.person1} pays all`;
+            splitText = `${p1Name} pays all`;
           } else {
-            splitText = `${this.person2} pays all`;
+            splitText = `${p2Name} pays all`;
           }
 
           return `
@@ -885,14 +924,13 @@
 
       copySessionId() {
         navigator.clipboard.writeText(`${window.location.href}?join=${this.sessionId}`).then(() => {
-          alert('Invite link copied to clipboard! Share it with your roommate.');
+          alert('Invite link copied to clipboard!');
         });
       }
     }
 
     const app = new ExpenseSplitter();
 
-    // Check if joining session from URL
     const params = new URLSearchParams(window.location.search);
     if (params.has('join')) {
       document.getElementById('joinSessionId').value = params.get('join');
