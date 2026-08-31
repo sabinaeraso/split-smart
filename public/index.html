@@ -476,8 +476,8 @@
             <label>How to split?</label>
             <div class="split-options">
               <button type="button" class="split-btn active" data-split="equal">50/50</button>
-              <button type="button" class="split-btn" data-split="p1">Person 1 pays all</button>
-              <button type="button" class="split-btn" data-split="p2">Person 2 pays all</button>
+              <button type="button" class="split-btn" data-split="p1" id="split-p1">Person 1 pays all</button>
+              <button type="button" class="split-btn" data-split="p2" id="split-p2">Person 2 pays all</button>
             </div>
           </div>
         </div>
@@ -774,6 +774,17 @@
       }
 
       updateUI() {
+        
+        const p1Name = document.getElementById('person1').value || 'Person 1';
+        const p2Name = document.getElementById('person2').value || 'Person 2';
+
+        // Update split button labels
+        document.getElementById('split-p1').textContent = `${p1Name} pays all`;
+        document.getElementById('split-p2').textContent = `${p2Name} pays all`;
+        
+        document.getElementById('person1-label').textContent = `${p1Name} paid`;
+        document.getElementById('person2-label').textContent = `${p2Name} paid`;
+
         const balances = this.calculateBalances();
         document.getElementById('person1-label').textContent = `${this.person1} paid`;
         document.getElementById('person2-label').textContent = `${this.person2} paid`;
