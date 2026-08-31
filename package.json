@@ -4,6 +4,7 @@
   "description": "Shared expense splitter with real-time sync",
   "main": "server.js",
   "scripts": {
+    "postinstall": "npm rebuild sqlite3",
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
