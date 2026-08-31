@@ -1,0 +1,20 @@
+{
+  "sessions": {
+    "q0nv80tdh": {
+      "id": "q0nv80tdh",
+      "person1": "You",
+      "person2": "Roommate",
+      "expenses": [
+        {
+          "id": "1788201830497",
+          "amount": 10,
+          "description": "t",
+          "payer": "person1",
+          "split": "equal",
+          "date": "8/31/2026"
+        }
+      ],
+      "created_at": "2026-08-31T18:43:46.202Z"
+    }
+  }
+}
