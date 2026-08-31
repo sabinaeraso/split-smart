@@ -657,7 +657,7 @@
         this.updateUI();
       }
 
-      async addExpense() {
+            async addExpense() {
         const amount = parseFloat(document.getElementById('amount').value);
         const description = document.getElementById('description').value.trim();
         const payer = document.getElementById('payer').value;
@@ -685,12 +685,10 @@
 
           if (!res.ok) throw new Error('Failed to add expense');
 
-          this.expenses.push(expense);
           document.getElementById('amount').value = '';
           document.getElementById('description').value = '';
           document.getElementById('payer').value = 'person1';
           document.getElementById('amount').focus();
-          this.updateUI();
         } catch (err) {
           alert('Failed to add expense. Check your connection.');
           console.error(err);
