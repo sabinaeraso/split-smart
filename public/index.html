@@ -752,19 +752,14 @@
           } else {
             person2Paid += exp.amount;
           }
-
           if (exp.split === 'equal') {
             const half = exp.amount / 2;
             person1Owes += half;
             person2Owes += half;
           } else if (exp.split === 'p2') {
-            
               person2Owes += exp.amount;
-            
           } else if (exp.split === 'p1') {
-            
               person1Owes += exp.amount;
-            
           }
         });
 
