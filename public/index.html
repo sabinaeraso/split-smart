@@ -758,13 +758,13 @@
             person1Owes += half;
             person2Owes += half;
           } else if (exp.split === 'p2') {
-            if (exp.payer === 'person1') {
+            
               person2Owes += exp.amount;
-            }
+            
           } else if (exp.split === 'p1') {
-            if (exp.payer === 'person2') {
+            
               person1Owes += exp.amount;
-            }
+            
           }
         });
 
