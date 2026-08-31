@@ -657,7 +657,7 @@
         this.updateUI();
       }
 
-            async addExpense() {
+      async addExpense() {
         const amount = parseFloat(document.getElementById('amount').value);
         const description = document.getElementById('description').value.trim();
         const payer = document.getElementById('payer').value;
@@ -755,11 +755,8 @@
 
           if (exp.split === 'equal') {
             const half = exp.amount / 2;
-            if (exp.payer === 'person1') {
-              person2Owes += half;
-            } else {
-              person1Owes += half;
-            }
+            person1Owes += half;
+            person2Owes += half;
           } else if (exp.split === 'p2') {
             if (exp.payer === 'person1') {
               person2Owes += exp.amount;
