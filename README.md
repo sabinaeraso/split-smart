@@ -81,35 +81,7 @@ npm run dev
    - Create or join a session
    - Real-time sync works across the world!
 
----
 
-### Option 2: Deploy to Render (Also Free)
-
-1. **Create a Render account** 
-   - Go to [render.com](https://render.com)
-   - Sign up with GitHub
-
-2. **Push code to GitHub** (same as Railway)
-
-3. **Create a Web Service**
-   - Go to [dashboard.render.com](https://dashboard.render.com)
-   - Click "New +" → "Web Service"
-   - Connect your GitHub repo
-   - Build command: (leave blank, auto-detected)
-   - Start command: `npm start`
-   - Click "Create Web Service"
-
-4. **Get your live URL**
-   - Once deployed, you'll get a `*.onrender.com` URL
-   - Share it with your roommate
-
----
-
-### Option 3: Deploy to Heroku (Free tier ended, but still cheapest paid option)
-
-If you prefer Heroku, follow their guide, but know the free tier is no longer available. Railway or Render are better free options now.
-
----
 
 ## How It Works
 
@@ -122,28 +94,8 @@ Socket.io (real-time sync)
     ↓
 Express Server
     ↓
-SQLite Database
+JSON Data store
 ```
-
-### Session Flow
-
-1. **Person A** opens the app → clicks "Start new" → gets Session ID `abc123`
-2. **Person A** copies the invite link or manually shares `abc123` with Person B
-3. **Person B** enters `abc123` → joined!
-4. **Person A** adds "Groceries, $50, A paid, 50/50"
-   - Sent to server
-   - Stored in database
-   - Broadcast via Socket.io to Person B
-   - Person B's browser updates instantly (no refresh needed)
-5. Both can see live settlement: "B owes A $25"
-
-### Data Persistence
-
-- SQLite stores all sessions and expenses
-- Survives server restarts
-- If deployed, data lives on the server (doesn't disappear on redeploy)
-
----
 
 ## File Structure
 
@@ -157,51 +109,6 @@ SQLite Database
 └── README.md              # This file
 ```
 
----
-
-## Troubleshooting
-
-### "Can't connect to server"
-- Check server is running (`npm start`)
-- Check URL is correct (`http://localhost:3000`)
-- Try restarting the server
-
-### "Session not found"
-- Make sure Session ID is typed exactly
-- Session IDs are 9 random characters
-- If deploying, wait 30 seconds for changes to propagate
-
-### "Changes aren't syncing"
-- Check your internet connection
-- Refresh the page once
-- Check browser console for errors (F12)
-
-### "Database error"
-- Delete `expenses.db` file, it will be recreated
-- Restart the server
-
----
-
-## Customization
-
-### Change port
-In `server.js`, line with `const PORT = process.env.PORT || 3000;`
-```javascript
-const PORT = process.env.PORT || 8000; // Use port 8000 instead
-```
-
-### Styling
-Edit `public/index.html` → `<style>` section
-
-### Add custom split percentages
-In `public/index.html`, add more split buttons:
-```html
-<button type="button" class="split-btn" data-split="p1">Person 1 pays all</button>
-<button type="button" class="split-btn" data-split="custom">Custom (70/30)</button>
-```
-
----
-
 ## Future Enhancements
 
 - [ ] User login / account system
@@ -210,18 +117,3 @@ In `public/index.html`, add more split buttons:
 - [ ] Mobile app version
 - [ ] Settlement suggestions (simplify transactions)
 - [ ] Email notifications
-
----
-
-## License
-
-MIT
-
-## Questions?
-
-If something doesn't work, check:
-1. Node.js is installed (`node --version` should show v14+)
-2. Dependencies installed (`ls node_modules/`)
-3. Server is running (terminal shows "Server running on...")
-4. Both people are on the same session ID
-5. Try clearing browser cache and refreshing
