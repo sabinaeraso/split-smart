@@ -1,7 +1,7 @@
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
-const fs = require('fs');
+const { Client } = require('pg');
 const path = require('path');
 const cors = require('cors');
 
@@ -18,140 +18,161 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-const dataPath = path.join(__dirname, 'data.json');
+// Database connection
+const client = new Client({
+  connectionString: process.env.DATABASE_URL
+});
 
-function loadData() {
+client.connect().catch(err => {
+  console.error('Database connection error:', err);
+  process.exit(1);
+});
+
+async function initializeDatabase() {
   try {
-    if (fs.existsSync(dataPath)) {
-      return JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-    }
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS sessions (
+        id TEXT PRIMARY KEY,
+        person1 TEXT NOT NULL,
+        person2 TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS expenses (
+        id SERIAL PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        expense_id TEXT NOT NULL,
+        amount DECIMAL NOT NULL,
+        description TEXT NOT NULL,
+        payer TEXT NOT NULL,
+        split TEXT NOT NULL,
+        date TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (session_id) REFERENCES sessions(id)
+      )
+    `);
+
+    console.log('Database tables initialized');
   } catch (err) {
-    console.error('Error loading data:', err);
+    console.error('Error initializing database:', err);
   }
-  return { sessions: {} };
 }
 
-function saveData(data) {
-  try {
-    fs.writeFileSync(dataPath, JSON.stringify(data, null, 2));
-  } catch (err) {
-    console.error('Error saving data:', err);
-  }
-}
+initializeDatabase();
 
-app.post('/api/session/create', (req, res) => {
+app.post('/api/session/create', async (req, res) => {
   const sessionId = Math.random().toString(36).substring(2, 11);
   const { person1, person2 } = req.body;
-  const data = loadData();
 
-  data.sessions[sessionId] = {
-    id: sessionId,
-    person1,
-    person2,
-    expenses: [],
-    created_at: new Date().toISOString()
-  };
-
-  saveData(data);
-  res.json({ sessionId });
-});
-
-app.get('/api/session/:sessionId', (req, res) => {
-  const { sessionId } = req.params;
-  const data = loadData();
-
-  if (!data.sessions[sessionId]) {
-    return res.status(404).json({ error: 'Session not found' });
+  try {
+    await client.query('INSERT INTO sessions (id, person1, person2) VALUES ($1, $2, $3)', [sessionId, person1, person2]);
+    res.json({ sessionId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create session' });
   }
-
-  const session = data.sessions[sessionId];
-  res.json({
-    session: {
-      id: session.id,
-      person1: session.person1,
-      person2: session.person2
-    },
-    expenses: session.expenses
-  });
 });
 
-app.post('/api/session/:sessionId/expense', (req, res) => {
+app.get('/api/session/:sessionId', async (req, res) => {
+  const { sessionId } = req.params;
+
+  try {
+    const sessionResult = await client.query('SELECT * FROM sessions WHERE id = $1', [sessionId]);
+    
+    if (sessionResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    const expensesResult = await client.query('SELECT * FROM expenses WHERE session_id = $1 ORDER BY created_at DESC', [sessionId]);
+
+    res.json({
+      session: {
+        id: sessionResult.rows[0].id,
+        person1: sessionResult.rows[0].person1,
+        person2: sessionResult.rows[0].person2
+      },
+      expenses: expensesResult.rows.map(exp => ({
+        id: exp.expense_id,
+        amount: parseFloat(exp.amount),
+        description: exp.description,
+        payer: exp.payer,
+        split: exp.split,
+        date: exp.date
+      }))
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch session' });
+  }
+});
+
+app.post('/api/session/:sessionId/expense', async (req, res) => {
   const { sessionId } = req.params;
   const { id, amount, description, payer, split, date } = req.body;
-  const data = loadData();
 
-  if (!data.sessions[sessionId]) {
-    return res.status(404).json({ error: 'Session not found' });
+  try {
+    await client.query('INSERT INTO expenses (session_id, expense_id, amount, description, payer, split, date) VALUES ($1, $2, $3, $4, $5, $6, $7)', 
+      [sessionId, id, amount, description, payer, split, date]);
+
+    io.to(sessionId).emit('expense_added', {
+      id,
+      amount,
+      description,
+      payer,
+      split,
+      date
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to add expense' });
   }
-
-  data.sessions[sessionId].expenses.push({
-    id,
-    amount,
-    description,
-    payer,
-    split,
-    date
-  });
-
-  saveData(data);
-
-  io.to(sessionId).emit('expense_added', {
-    id,
-    amount,
-    description,
-    payer,
-    split,
-    date
-  });
-
-  res.json({ success: true });
 });
 
-app.delete('/api/session/:sessionId/expense/:expenseId', (req, res) => {
+app.delete('/api/session/:sessionId/expense/:expenseId', async (req, res) => {
   const { sessionId, expenseId } = req.params;
-  const data = loadData();
 
-  if (!data.sessions[sessionId]) {
-    return res.status(404).json({ error: 'Session not found' });
+  try {
+    await client.query('DELETE FROM expenses WHERE session_id = $1 AND expense_id = $2', [sessionId, expenseId]);
+
+    io.to(sessionId).emit('expense_deleted', { id: expenseId });
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete expense' });
   }
-
-  data.sessions[sessionId].expenses = data.sessions[sessionId].expenses.filter(e => e.id !== expenseId);
-  saveData(data);
-
-  io.to(sessionId).emit('expense_deleted', { id: expenseId });
-  res.json({ success: true });
 });
 
-app.delete('/api/session/:sessionId/expenses', (req, res) => {
+app.delete('/api/session/:sessionId/expenses', async (req, res) => {
   const { sessionId } = req.params;
-  const data = loadData();
 
-  if (!data.sessions[sessionId]) {
-    return res.status(404).json({ error: 'Session not found' });
+  try {
+    await client.query('DELETE FROM expenses WHERE session_id = $1', [sessionId]);
+
+    io.to(sessionId).emit('expenses_cleared');
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to clear expenses' });
   }
-
-  data.sessions[sessionId].expenses = [];
-  saveData(data);
-
-  io.to(sessionId).emit('expenses_cleared');
-  res.json({ success: true });
 });
 
-app.put('/api/session/:sessionId/names', (req, res) => {
+app.put('/api/session/:sessionId/names', async (req, res) => {
   const { sessionId } = req.params;
   const { person1, person2 } = req.body;
-  const data = loadData();
 
-  if (!data.sessions[sessionId]) {
-    return res.status(404).json({ error: 'Session not found' });
+  try {
+    await client.query('UPDATE sessions SET person1 = $1, person2 = $2 WHERE id = $3', [person1, person2, sessionId]);
+
+    io.to(sessionId).emit('names_updated', { person1, person2 });
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update names' });
   }
-
-  data.sessions[sessionId].person1 = person1;
-  data.sessions[sessionId].person2 = person2;
-  saveData(data);
-
-  io.to(sessionId).emit('names_updated', { person1, person2 });
-  res.json({ success: true });
 });
 
 io.on('connection', (socket) => {
