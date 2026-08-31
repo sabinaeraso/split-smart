@@ -4,12 +4,12 @@ A shared expense tracker for roommates or friends. One person creates a session,
 
 ## Features
 
-- 🔗 **Real-time sync** — Changes appear instantly on both devices via WebSocket
-- 👥 **Session-based** — Each pair of people gets their own session
-- 💰 **Flexible splits** — 50/50, one person pays all, or custom
-- 📊 **Live settlement** — Always shows who owes whom and how much
-- 💾 **Persistent** — Data is stored in the database, survives refreshes
-- 📤 **Export** — Download expenses as JSON anytime
+- **Real-time sync** — Changes appear instantly on both devices via WebSocket
+- **Session-based** — Each pair of people gets their own session
+- **Flexible splits** — 50/50, one person pays all, or custom
+- **Live settlement** — Always shows who owes whom and how much
+- **Persistent** — Data is stored in the database, survives refreshes
+- **Export** — Download expenses as JSON anytime
 
 ## Quick Start (Local)
 
